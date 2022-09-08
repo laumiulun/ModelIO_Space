@@ -1,3 +1,4 @@
 torch
 torchvision
+xgboost
 boto3
