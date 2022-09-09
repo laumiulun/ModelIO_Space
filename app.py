@@ -1,5 +1,3 @@
-from configparser import ConfigParser
-from tkinter.tix import COLUMN
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -15,9 +13,8 @@ import botocore
 from botocore import UNSIGNED
 from botocore.config import Config
 
-# Plotly
+# Plotly and Bokeh
 import plotly.graph_objects as go
-
 from bokeh.models.widgets import Div
 
 
@@ -226,26 +223,18 @@ with stats_col4:
 # ---- Model Information -----------
 # info_col1, info_col2, info_col3 = st.columns([1,1,1])
 with st.sidebar:
+    with st.expander('Model Description', expanded=False):
+        st.markdown('Adding an image to an email campaign that will provide optimal engagement metrics can be challenging. How do you know which image to upload to your HTML, that will make an impact or significantly move the needle? And why would this image garner the best engagement? This model seeks to help campaign engineers understand which images affect their user engagement rate the most. The specific model is implemented using ResNet 18 and ResNet 34 for image embeddings extraction, and then we used these image embeddings as further inputs into a Gradient Boosted Tree model to generate probabilities on a user-specified target variable. The base model was adapted to car images and accurately predicted the user engagement rates with 91% accuracy. This model is adaptable for any large-scale marketing campaign using images. This model will identify the best images for optimal engagement for an email marketing campaign and serve engagement metrics prior to campaign launch. The model serves up several different images in milliseconds, so the campaign engineer understands which image to select in the campaign for optimized engagement.')
+
+    with st.expander('Model Information', expanded=False):
+        st.table(table_data())
 
     url_button('Model Homepage','https://www.loxz.com/#/models/IO')
-    st.text('')
-
-
-# with info_col2:
     url_button('Full Report','https://resources.loxz.com/reports/image-optimization-model')
-    st.text('')
-
-# with info_col3:
     url_button('Amazon Market Place','https://aws.amazon.com/marketplace')
-    st.text('')
 
 
 
-with st.expander('Model Description', expanded=False):
-    st.markdown('Adding an image to an email campaign that will provide optimal engagement metrics can be challenging. How do you know which image to upload to your HTML, that will make an impact or significantly move the needle? And why would this image garner the best engagement? This model seeks to help campaign engineers understand which images affect their user engagement rate the most. The specific model is implemented using ResNet 18 and ResNet 34 for image embeddings extraction, and then we used these image embeddings as further inputs into a Gradient Boosted Tree model to generate probabilities on a user-specified target variable. The base model was adapted to car images and accurately predicted the user engagement rates with 91% accuracy. This model is adaptable for any large-scale marketing campaign using images. This model will identify the best images for optimal engagement for an email marketing campaign and serve engagement metrics prior to campaign launch. The model serves up several different images in milliseconds, so the campaign engineer understands which image to select in the campaign for optimized engagement.')
-
-with st.expander('Model Information', expanded=False):
-    st.table(table_data())
 
 uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 
