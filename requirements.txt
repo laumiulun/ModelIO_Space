@@ -4,3 +4,4 @@ xgboost==0.90
 sklearn
 boto3
 botocore
+plotly
