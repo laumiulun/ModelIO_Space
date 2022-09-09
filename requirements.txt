@@ -5,3 +5,4 @@ sklearn
 boto3
 botocore
 plotly
+bokeh
