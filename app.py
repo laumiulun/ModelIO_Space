@@ -25,6 +25,48 @@ def convert_percentage(score):
     rounded_probability = str(np.round(score*100,2)) + "%"
     return rounded_probability
 
+def url_button(button_name,url):
+    if st.button(button_name):
+        js = """window.open('{url}')""".format(url=url) # New tab or window
+        html = '<img src onerror="{}">'.format(js)
+        div = Div(text=html)
+        st.bokeh_chart(div)
+
+def table_data():
+    # creating table data
+    field = [
+        'Data Scientist',
+        'Dataset',
+        'Algorithm',
+        'Framework',
+        'Ensemble',
+        'Domain',
+        'Model Size'
+    ]
+
+    data = [
+        'Andy Lau',
+        'Stanford Cars Dataset',
+        'Deep Learning Convolutional Neural Network: ResNet50',
+        'Pytorch',
+        'XGBoost',
+        'ResNet Image Classification',
+        '76.55 KB'
+    ]
+
+    data = {
+        'Field':field,
+        'Data':data
+    }
+
+    df = pd.DataFrame.from_dict(data)
+
+    return df
+
+
+def create_box(text,label):
+    st.markdown(f'<p style="background-color:#d2e4f6;padding: 5px 5px;border-radius:10px;font-size:24px;"><center><b>{text}</b>: {label}</center></p>', unsafe_allow_html=True)
+
 def create_table():
     # creating table data
     field = [
@@ -138,26 +180,72 @@ with col2:
 
 stats_col1, stats_col2, stats_col3, stats_col4 = st.columns([1,1,1,1])
 
-def create_box(text,label):
-    st.markdown(f'<p style="background-color:#d2e4f6;padding: 5px 5px;border-radius:10px;font-size:24px;"><center><b>{text}</b>: {label}</center></p>', unsafe_allow_html=True)
+# with stats_col1:
+#     # st.markdown(' **Production**: Ready',unsafe_allow_html=True)
+#     create_box('Production','Ready')
+# with stats_col2:
+#     create_box('Accuracy','91%')
+# with stats_col3:
+#     create_box('Speed','2.18 ms')
+# with stats_col4:
+#     # st.markdown(' **Industry**: Email Marketing')
+#     create_box('Industry','Email Marketing')
 
+# st.markdown("""
+# <style>
+# div[data-testid="metric-container"] {
+#    background-color: rgba(28, 131, 225, 0.1);
+#    border: 1px solid rgba(28, 131, 225, 0.1);
+#    padding: 5% 5% 5% 10%;
+#    border-radius: 5px;
+#    color: rgb(30, 103, 119);
+#    overflow-wrap: break-word;
+# }
+
+# /* breakline for metric text         */
+# div[data-testid="metric-container"] > label[data-testid="stMetricLabel"] > div {
+#    overflow-wrap: break-word;
+#    white-space: break-spaces;
+#    color: red;
+# }
+# </style>
+# """
+# , unsafe_allow_html=True)
 with stats_col1:
-    # st.markdown(' **Production**: Ready',unsafe_allow_html=True)
-    create_box('Production','Ready')
+    st.metric(label="Production", value="Ready")
 with stats_col2:
-    create_box('Accuracy','91%')
-with stats_col3:
-    create_box('Speed','2.18 ms')
-with stats_col4:
-    # st.markdown(' **Industry**: Email Marketing')
-    create_box('Industry','Email Marketing')
-if st.button('Amazon Market Place'):
-    js = "window.open('https://aws.amazon.com/marketplace')"  # New tab or window
-    html = '<img src onerror="{}">'.format(js)
-    div = Div(text=html)
-    st.bokeh_chart(div)
+    st.metric(label="Accuracy", value="91%")
 
-st.markdown('Adding an image to an email campaign that will provide optimal engagement metrics can be challenging. How do you know which image to upload to your HTML, that will make an impact or significantly move the needle? And why would this image garner the best engagement? This model seeks to help campaign engineers understand which images affect their user engagement rate the most. The specific model is implemented using ResNet 18 and ResNet 34 for image embeddings extraction, and then we used these image embeddings as further inputs into a Gradient Boosted Tree model to generate probabilities on a user-specified target variable. The base model was adapted to car images and accurately predicted the user engagement rates with 91% accuracy. This model is adaptable for any large-scale marketing campaign using images. This model will identify the best images for optimal engagement for an email marketing campaign and serve engagement metrics prior to campaign launch. The model serves up several different images in milliseconds, so the campaign engineer understands which image to select in the campaign for optimized engagement.')
+with stats_col3:
+    st.metric(label="Speed", value="2.18 ms")
+
+with stats_col4:
+    st.metric(label="Industry", value="Email")
+
+
+# ---- Model Information -----------
+# info_col1, info_col2, info_col3 = st.columns([1,1,1])
+with st.sidebar:
+
+    url_button('Model Homepage','https://www.loxz.com/#/models/IO')
+    st.text('')
+
+
+# with info_col2:
+    url_button('Full Report','https://resources.loxz.com/reports/image-optimization-model')
+    st.text('')
+
+# with info_col3:
+    url_button('Amazon Market Place','https://aws.amazon.com/marketplace')
+    st.text('')
+
+
+
+with st.expander('Model Description', expanded=False):
+    st.markdown('Adding an image to an email campaign that will provide optimal engagement metrics can be challenging. How do you know which image to upload to your HTML, that will make an impact or significantly move the needle? And why would this image garner the best engagement? This model seeks to help campaign engineers understand which images affect their user engagement rate the most. The specific model is implemented using ResNet 18 and ResNet 34 for image embeddings extraction, and then we used these image embeddings as further inputs into a Gradient Boosted Tree model to generate probabilities on a user-specified target variable. The base model was adapted to car images and accurately predicted the user engagement rates with 91% accuracy. This model is adaptable for any large-scale marketing campaign using images. This model will identify the best images for optimal engagement for an email marketing campaign and serve engagement metrics prior to campaign launch. The model serves up several different images in milliseconds, so the campaign engineer understands which image to select in the campaign for optimized engagement.')
+
+with st.expander('Model Information', expanded=False):
+    st.table(table_data())
 
 uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 
