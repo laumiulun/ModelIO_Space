@@ -1,3 +1,4 @@
+from configparser import ConfigParser
 from tkinter.tix import COLUMN
 import streamlit as st
 import numpy as np
@@ -5,7 +6,13 @@ import pandas as pd
 import PIL
 import torch
 import pickle
+
+# AWS 
 import boto3
+import botocore
+from botocore import UNSIGNED
+from botocore.config import Config
+
 
 # import time
 import torchvision.transforms as transforms
@@ -25,7 +32,7 @@ class SaveFeatures():
         self.hook.remove()
 
 
-def read_image_from_s3(bucket, key, region_name='us-west-2'):
+def read_image_from_s3(bucket, key):
     """Load image file from s3.
 
     Parameters
@@ -40,12 +47,12 @@ def read_image_from_s3(bucket, key, region_name='us-west-2'):
     np array
         Image array
     """
-    s3 = boto3.resource('s3', region_name=region_name)
+    s3 = boto3.resource('s3',config=Config(signature_version=UNSIGNED))
     bucket = s3.Bucket(bucket)
     object = bucket.Object(key)
     response = object.get()
     file_stream = response['Body']
-    im = Image.open(file_stream).convert('RGB')
+    im = PIL.Image.open(file_stream).convert('RGB')
     return im
 
 
@@ -66,7 +73,7 @@ uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
     upload_img = PIL.Image.open(uploaded_file)
-    st.image(upload_img, caption='Uploaded Image', width=300)
+    st.image(upload_img, width=300)
 else:
     upload_img = None
     # st.write("")
@@ -161,11 +168,11 @@ if st.button('Generate Predictions'):
 
         # 2 from each 
         top_10 = prob_series.sort_values(ascending=False)[:20]
-        random_4_from_top_10 = top_10.sample(replace=False,n=2)
+        random_4_from_top_10 = top_10.sample(replace=False,n=1)
         
         # 2 from top 10 to 100
         top_10_100 = prob_series.sort_values(ascending=False)[20:100]
-        random_4_from_top_10_100 = top_10_100.sample(replace=False,n=2)
+        random_4_from_top_10_100 = top_10_100.sample(replace=False,n=1)
 
         alternate_probs = pd.concat([random_4_from_top_10, random_4_from_top_10_100], axis=0)
 
@@ -173,9 +180,6 @@ if st.button('Generate Predictions'):
         # Making predictions on user input and displaying results:
         img_pred = xgb_model.predict(img_df)[0]
         img_proba = xgb_model.predict_proba(img_df)[0][1]
-
-        ######
-        # making dictionary for max probability for recommendation
         max_prob_dict = {}
         max_prob_dict['current_image'] = img_proba
         for i in range(len(alternate_probs)):
@@ -183,17 +187,27 @@ if st.button('Generate Predictions'):
 
         st.write('Below are the probabilities if alternate recommended images were used')
 
-        img_index = alternate_probs.index[0]
-        img_path = data.iloc[img_index][0]
-        bucket = 'sagemaker-us-west-2-647020561811'
-        key = 'sagemaker/Marlov-Image/'
 
-        s3 = boto3.resource('s3')
-        bucket = s3.Bucket(bucket)
-        # for obj in bucket.objects.filter(Prefix=key):
-        for obj in bucket.objects.all():
-            key = obj.key
-            body = obj.get()['Body'].read()
-        # alt_img = read_image_from_s3(bucket,key,img_path)
+        img_index_1 = alternate_probs.index[0]
+        img_path_1 = data.iloc[img_index_1][0]
+
+        img_index_2 = alternate_probs.index[1]
+        img_path_2 = data.iloc[img_index_2][0]
+
+        print(img_path_1)
+        print(img_path_2)
+
+        bucket = 'lozx-public-data'
+        file_base = 'Model-IO/'
+        print(file_base + img_path_1)
+        print(file_base + img_path_2)
+        im_1 = read_image_from_s3(bucket, file_base + img_path_1)
+        im_2 = read_image_from_s3(bucket, file_base + img_path_2)
+
+        alt_prob_1 = str(np.round(alternate_probs.values[0]*100,2)) + "%"
+        alt_prob_2 = str(np.round(alternate_probs.values[1]*100,2)) + "%"
+        st.image(im_1, caption=alt_prob_1,width=300);
+        st.image(im_2, caption=alt_prob_2, width=300);
+
 
         placeholder.empty()
