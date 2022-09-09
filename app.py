@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import PIL
 import torch
+import torchvision.transforms as transforms
+
 import pickle
 
 # AWS 
@@ -13,9 +15,65 @@ import botocore
 from botocore import UNSIGNED
 from botocore.config import Config
 
+# Plotly
+import plotly.graph_objects as go
 
-# import time
-import torchvision.transforms as transforms
+from bokeh.models.widgets import Div
+
+
+def convert_percentage(score):
+    rounded_probability = str(np.round(score*100,2)) + "%"
+    return rounded_probability
+
+def create_table():
+    # creating table data
+    field = [
+        'Data Scientist',
+        'Dataset',
+        'Algorithm',
+        'Framework',
+        'Ensemble',
+        'Domain',
+        'Model Size'
+    ]
+
+    data = [
+        'Andy Lau',
+        'Stanford Cars Dataset',
+        'Deep Learning Convolutional Neural Network: ResNet50',
+        'Pytorch',
+        'XGBoost',
+        'ResNet Image Classification',
+        '76.55 KB'
+    ]
+
+    data = {
+        'Field':field,
+        'Data':data
+    }
+
+    df = pd.DataFrame.from_dict(data)
+
+
+    header_color = ['#0f4d60','#1c8d99']
+    cell_color = ['rgba(15,77,96,0.25)','rgba(28,141,153,0.33)']
+
+    # Create figures  
+    fig = go.Figure(data=[go.Table(
+        header=dict(values=list(df.columns),
+                    fill_color=header_color,
+                    font=dict(color='white', size=15),
+                    align='left'),
+        cells=dict(values=[df.Field, df.Data],
+                fill_color=header_color,
+                font=dict(color='white', size=15),
+                align='left'))
+    ])
+    # Make the header dissapear 
+    fig.for_each_trace(lambda t: t.update(header_fill_color = 'rgba(0,0,0,0)'))
+
+    return fig
+
 
 class SaveFeatures():
     features=None
@@ -56,16 +114,48 @@ def read_image_from_s3(bucket, key):
     return im
 
 
-def make_predictions():
-    print("hi")
 
 # ---- Title Screen -----------
-st.title('Image Optimization: Email Industry')
+st.markdown('# Image Optimization: Email Industry')
 
 # image = Image.Open('figures/ModelIO.png')
 
-img = PIL.Image.open('figures/IO.png')
-st.image(img)
+col1, col2, col3 = st.columns([1,1,1])
+
+with col2:
+    img = PIL.Image.open('figures/IO.png')
+    st.image(img)
+# with col2:
+    # html3 = f"""
+    #         <div class="total-dc"">
+    #             <p>Total DC: £<p>
+    #             <p>TEST<p>
+    #         </div>
+
+    #         """
+    # st.markdown(html3, unsafe_allow_html=True)
+    # st.markdown('#### Data Scientist')
+
+stats_col1, stats_col2, stats_col3, stats_col4 = st.columns([1,1,1,1])
+
+def create_box(text,label):
+    st.markdown(f'<p style="background-color:#d2e4f6;padding: 5px 5px;border-radius:10px;font-size:24px;"><center><b>{text}</b>: {label}</center></p>', unsafe_allow_html=True)
+
+with stats_col1:
+    # st.markdown(' **Production**: Ready',unsafe_allow_html=True)
+    create_box('Production','Ready')
+with stats_col2:
+    create_box('Accuracy','91%')
+with stats_col3:
+    create_box('Speed','2.18 ms')
+with stats_col4:
+    # st.markdown(' **Industry**: Email Marketing')
+    create_box('Industry','Email Marketing')
+if st.button('Amazon Market Place'):
+    js = "window.open('https://aws.amazon.com/marketplace')"  # New tab or window
+    html = '<img src onerror="{}">'.format(js)
+    div = Div(text=html)
+    st.bokeh_chart(div)
 
 st.markdown('Adding an image to an email campaign that will provide optimal engagement metrics can be challenging. How do you know which image to upload to your HTML, that will make an impact or significantly move the needle? And why would this image garner the best engagement? This model seeks to help campaign engineers understand which images affect their user engagement rate the most. The specific model is implemented using ResNet 18 and ResNet 34 for image embeddings extraction, and then we used these image embeddings as further inputs into a Gradient Boosted Tree model to generate probabilities on a user-specified target variable. The base model was adapted to car images and accurately predicted the user engagement rates with 91% accuracy. This model is adaptable for any large-scale marketing campaign using images. This model will identify the best images for optimal engagement for an email marketing campaign and serve engagement metrics prior to campaign launch. The model serves up several different images in milliseconds, so the campaign engineer understands which image to select in the campaign for optimized engagement.')
 
@@ -73,17 +163,11 @@ uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
     upload_img = PIL.Image.open(uploaded_file)
-    st.image(upload_img, width=300)
 else:
     upload_img = None
-    # st.write("")
-    # st.write("Classifying...")
-    # label = predict_label(image)
-    # st.write('%s (%.2f%%)' % (label[0], label[1]*100))
 
 
 # Drop down menu
-
 target_variables = ['Open Rate',
                     'Click Through Open Rate',
                     'Revenue Generated per Email',
@@ -130,7 +214,6 @@ if st.button('Generate Predictions'):
 
         # Transform to tensor 
         # transforming user input PIL Image to tensor
-
         # single_img_path = list(uploaded_image.value.keys())[0]
         single_image = upload_img.convert('RGB') # converting grayscale images to RGB
         # st.image(single_image, caption='Uploaded Image', width=300)
@@ -142,8 +225,6 @@ if st.button('Generate Predictions'):
 
         image_tensor = my_transforms(single_image).unsqueeze(0) # transforming into tensor, unsqueeze to match input batch size dimensions
 
-
-    
         placeholder.write('Loading Model...')
 
         model_path = 'model/my_checkpoint1.pth'
@@ -187,6 +268,9 @@ if st.button('Generate Predictions'):
 
         st.write('Below are the probabilities if alternate recommended images were used')
 
+        st.subheader('Original Image Probability')
+        st.image(upload_img,caption = convert_percentage(img_proba),width=300)
+
 
         img_index_1 = alternate_probs.index[0]
         img_path_1 = data.iloc[img_index_1][0]
@@ -194,20 +278,19 @@ if st.button('Generate Predictions'):
         img_index_2 = alternate_probs.index[1]
         img_path_2 = data.iloc[img_index_2][0]
 
-        print(img_path_1)
-        print(img_path_2)
-
         bucket = 'lozx-public-data'
         file_base = 'Model-IO/'
-        print(file_base + img_path_1)
-        print(file_base + img_path_2)
         im_1 = read_image_from_s3(bucket, file_base + img_path_1)
         im_2 = read_image_from_s3(bucket, file_base + img_path_2)
 
-        alt_prob_1 = str(np.round(alternate_probs.values[0]*100,2)) + "%"
-        alt_prob_2 = str(np.round(alternate_probs.values[1]*100,2)) + "%"
-        st.image(im_1, caption=alt_prob_1,width=300);
-        st.image(im_2, caption=alt_prob_2, width=300);
+
+        alt_col1, alt_col2 = st.columns([1,1])
+        with alt_col1:
+            st.subheader("Alternate Image 1")
+            st.image(im_1, caption=convert_percentage(alternate_probs.values[0]),width=300);
+        with alt_col2:
+            st.subheader("Alternate Image 2")
+            st.image(im_2, caption=convert_percentage(alternate_probs.values[1]), width=300);
 
 
         placeholder.empty()
