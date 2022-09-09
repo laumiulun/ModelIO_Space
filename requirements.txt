@@ -5,4 +5,4 @@ sklearn
 boto3
 botocore
 plotly
-bokeh
+bokeh==2.4.1
