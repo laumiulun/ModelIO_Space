@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import PIL
 import torch
+# import streamlit_analytics
 import torchvision.transforms as transforms
 
 import pickle
@@ -155,15 +156,44 @@ def read_image_from_s3(bucket, key):
 
 
 # ---- Title Screen -----------
-st.markdown('# Image Optimization: Email Industry')
+
+def add_bg_from_url():
+    st.markdown(
+         f"""
+         <style>
+         .stApp {{
+             background-image: linear-gradient(#0A3144,#126072,#1C8D99);
+             background-attachment: fixed;
+             background-size: cover
+         }}
+         </style>
+         """,
+         unsafe_allow_html=True
+     )
+
+
+st.set_page_config(layout="wide")
+if 'user_counts' not in st.session_state:
+    st.session_state['user_counts'] = 0
+
+add_bg_from_url() 
+
+st.session_state.user_counts +=1     # Increase usercounter
+
+col1, col2 = st.columns([10,1])
+with col1:
+    st.markdown('# Image Optimization: Email Industry')
+
+with col2:
+    st.write(st.session_state.user_counts)
 
 # image = Image.Open('figures/ModelIO.png')
 
-col1, col2, col3 = st.columns([1,1,1])
+# col1, col2, col3 = st.columns([1,1,1])
 
-with col2:
-    img = PIL.Image.open('figures/IO.png')
-    st.image(img)
+# with col2:
+#     img = PIL.Image.open('figures/IO.png')
+#     st.image(img)
 # with col2:
     # html3 = f"""
     #         <div class="total-dc"">
@@ -224,9 +254,18 @@ with stats_col4:
 # info_col1, info_col2, info_col3 = st.columns([1,1,1])
 with st.sidebar:
     with st.expander('Model Description', expanded=False):
+        img = PIL.Image.open('figures/IO.png')
+        st.image(img)
         st.markdown('Adding an image to an email campaign that will provide optimal engagement metrics can be challenging. How do you know which image to upload to your HTML, that will make an impact or significantly move the needle? And why would this image garner the best engagement? This model seeks to help campaign engineers understand which images affect their user engagement rate the most. The specific model is implemented using ResNet 18 and ResNet 34 for image embeddings extraction, and then we used these image embeddings as further inputs into a Gradient Boosted Tree model to generate probabilities on a user-specified target variable. The base model was adapted to car images and accurately predicted the user engagement rates with 91% accuracy. This model is adaptable for any large-scale marketing campaign using images. This model will identify the best images for optimal engagement for an email marketing campaign and serve engagement metrics prior to campaign launch. The model serves up several different images in milliseconds, so the campaign engineer understands which image to select in the campaign for optimized engagement.')
 
     with st.expander('Model Information', expanded=False):
+        hide_table_row_index = """
+            <style>
+            thead tr th:first-child {display:none}
+            tbody th {display:none}
+            </style>
+            """
+        st.markdown(hide_table_row_index, unsafe_allow_html=True)
         st.table(table_data())
 
     url_button('Model Homepage','https://www.loxz.com/#/models/IO')
